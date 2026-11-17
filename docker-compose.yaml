@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: nutripick-postgres
+    environment:
+      POSTGRES_DB: nutripick
+      POSTGRES_USER: nutripick
+      POSTGRES_PASSWORD: nutripick-local
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: nutripick-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres-data:
