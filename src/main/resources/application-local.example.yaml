@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/nutripick
-    username: your-username
-    password: your-password
+    username: nutripick
+    password: nutripick-local
 
   jpa:
     hibernate:
@@ -11,4 +11,4 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6379
+      port: 6330

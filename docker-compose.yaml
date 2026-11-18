@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: nutripick
       POSTGRES_PASSWORD: nutripick-local
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
@@ -15,7 +15,7 @@ services:
     image: redis:7
     container_name: nutripick-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6330:6379"
 
 volumes:
   postgres-data:
