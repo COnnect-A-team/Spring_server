@@ -124,6 +124,12 @@ public class FoodNutrition {
             BigDecimal normalizedBasisValue,
             Unit normalizedBasisUnit
     ){
+        if (("g".equals(basisUnit) && normalizedBasisUnit == Unit.mL)
+                || (("ml".equals(basisUnit) || "mL".equals(basisUnit)) && normalizedBasisUnit == Unit.g)) {
+            normalizedBasisValue = null;
+            normalizedBasisUnit = null;
+        }
+
         MissingStatus missingStatus = determineMissingStatus(
                 energy,
                 carbohydrate,
@@ -138,11 +144,13 @@ public class FoodNutrition {
                 dietaryFiber
         );
 
-        if (("g".equals(basisUnit) && normalizedBasisUnit == Unit.mL)
-                || (("ml".equals(basisUnit) || "mL".equals(basisUnit)) && normalizedBasisUnit == Unit.g)) {
-            normalizedBasisValue = null;
-            normalizedBasisUnit = null;
-        }
+        NormalizationStatus normalizationStatus = determineNormalizationStatus(
+                basisValue,
+                basisUnit,
+                normalizedBasisValue,
+                normalizedBasisUnit,
+                missingStatus
+        );
 
         return new FoodNutrition(
                 food,
@@ -161,7 +169,7 @@ public class FoodNutrition {
                 calcium,
                 dietaryFiber,
                 missingStatus,
-                determineNormalizationStatus(basisValue, basisUnit, normalizedBasisValue, normalizedBasisUnit, missingStatus),
+                normalizationStatus,
                 normalizedBasisValue,
                 normalizedBasisUnit
         );
