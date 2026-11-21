@@ -1,5 +1,5 @@
 package com.c0nnect.nutripick.domain.food.entity;
 
-public enum NormalizeBasisUnit {
+public enum Unit {
     g, mL
 }

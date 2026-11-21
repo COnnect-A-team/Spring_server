@@ -79,7 +79,7 @@ public class FoodNutrition {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "normalized_basis_unit", length = 20)
-    private NormalizeBasisUnit normalizedBasisUnit;
+    private Unit normalizedBasisUnit;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -94,7 +94,7 @@ public class FoodNutrition {
             BigDecimal protein, BigDecimal fat, BigDecimal sugar, BigDecimal sodium, BigDecimal saturatedFat,
             BigDecimal transFat, BigDecimal cholesterol, BigDecimal calcium, BigDecimal dietaryFiber,
             MissingStatus missingStatus, NormalizationStatus normalizationStatus, BigDecimal normalizedBasisValue,
-            NormalizeBasisUnit normalizedBasisUnit
+            Unit normalizedBasisUnit
     ) {
         this.food = food;
         this.basisValue = basisValue;
@@ -122,8 +122,28 @@ public class FoodNutrition {
             BigDecimal protein, BigDecimal fat, BigDecimal sugar, BigDecimal sodium, BigDecimal saturatedFat,
             BigDecimal transFat, BigDecimal cholesterol, BigDecimal calcium, BigDecimal dietaryFiber,
             BigDecimal normalizedBasisValue,
-            NormalizeBasisUnit normalizedBasisUnit
+            Unit normalizedBasisUnit
     ){
+        MissingStatus missingStatus = determineMissingStatus(
+                energy,
+                carbohydrate,
+                protein,
+                fat,
+                sugar,
+                sodium,
+                saturatedFat,
+                transFat,
+                cholesterol,
+                calcium,
+                dietaryFiber
+        );
+
+        if (("g".equals(basisUnit) && normalizedBasisUnit == Unit.mL)
+                || (("ml".equals(basisUnit) || "mL".equals(basisUnit)) && normalizedBasisUnit == Unit.g)) {
+            normalizedBasisValue = null;
+            normalizedBasisUnit = null;
+        }
+
         return new FoodNutrition(
                 food,
                 basisValue,
@@ -140,10 +160,52 @@ public class FoodNutrition {
                 cholesterol,
                 calcium,
                 dietaryFiber,
-                MissingStatus.NONE,
-                NormalizationStatus.UNAVAILABLE,
+                missingStatus,
+                determineNormalizationStatus(basisValue, basisUnit, normalizedBasisValue, normalizedBasisUnit, missingStatus),
                 normalizedBasisValue,
                 normalizedBasisUnit
         );
+    }
+
+    private static MissingStatus determineMissingStatus(BigDecimal...nutrients){
+        int nullCount = 0;
+
+        for(BigDecimal v : nutrients){
+            if(v == null){
+                nullCount++;
+            }
+        }
+
+        if(nullCount==0){
+            return MissingStatus.NONE;
+        } else if (nullCount == nutrients.length) {
+            return MissingStatus.ALL;
+        } else{
+            return MissingStatus.PARTIAL;
+        }
+    }
+
+    private static NormalizationStatus determineNormalizationStatus(
+            BigDecimal basisValue, String basisUnit, BigDecimal normalizedBasisValue, Unit normalizedBasisUnit, MissingStatus missingStatus
+    ) {
+        if (basisValue == null || basisValue.signum() <= 0) {
+            return NormalizationStatus.UNAVAILABLE;
+        }
+        if(basisUnit == null){
+            return NormalizationStatus.UNAVAILABLE;
+        }
+        if(normalizedBasisValue == null || normalizedBasisValue.compareTo(BigDecimal.ZERO) != 1){
+            return NormalizationStatus.UNAVAILABLE;
+        }
+        if(normalizedBasisUnit == null){
+            return NormalizationStatus.UNAVAILABLE;
+        }
+        if(missingStatus == MissingStatus.ALL){
+            return NormalizationStatus.UNAVAILABLE;
+        }
+        if(missingStatus == MissingStatus.PARTIAL){
+            return NormalizationStatus.PARTIAL;
+        }
+        return NormalizationStatus.AVAILABLE;
     }
 }

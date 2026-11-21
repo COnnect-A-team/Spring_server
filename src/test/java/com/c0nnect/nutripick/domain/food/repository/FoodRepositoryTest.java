@@ -4,6 +4,7 @@ import com.c0nnect.nutripick.domain.food.entity.Food;
 import com.c0nnect.nutripick.domain.food.entity.FoodNutrition;
 import com.c0nnect.nutripick.domain.food.entity.MissingStatus;
 import com.c0nnect.nutripick.domain.food.entity.NormalizationStatus;
+import com.c0nnect.nutripick.domain.food.entity.Unit;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -87,5 +89,132 @@ class FoodRepositoryTest {
         assertNotNull(foundNutrition.getCreatedAt());
         assertNotNull(foundNutrition.getUpdatedAt());
         assertTrue(foodNutritionRepository.existsById(savedFood.getId()));
+    }
+
+    @Test
+    void marksNutritionPartialWhenSomeNutrientValuesAreMissing() {
+        Food savedFood = foodRepository.saveAndFlush(
+                Food.createLocal("부분 누락 테스트 식품", "테스트 제조사", "가공식품")
+        );
+        FoodNutrition nutrition = createNutrition(savedFood, "g", null, new BigDecimal("100.000"), Unit.g);
+
+        foodNutritionRepository.saveAndFlush(nutrition);
+        entityManager.clear();
+
+        FoodNutrition foundNutrition = foodNutritionRepository.findById(savedFood.getId()).orElseThrow();
+
+        assertEquals(MissingStatus.PARTIAL, foundNutrition.getMissingStatus());
+        assertEquals(NormalizationStatus.PARTIAL, foundNutrition.getNormalizationStatus());
+        assertEquals("g", foundNutrition.getBasisUnit());
+    }
+
+    @Test
+    void marksNutritionAvailableWhenRawAndNormalizedBasisCanBeMatched() {
+        Food savedFood = foodRepository.saveAndFlush(
+                Food.createLocal("환산 가능 테스트 식품", "테스트 제조사", "가공식품")
+        );
+        FoodNutrition nutrition = createNutrition(
+                savedFood, "g", new BigDecimal("30.000"), new BigDecimal("100.000"), Unit.g
+        );
+
+        foodNutritionRepository.saveAndFlush(nutrition);
+        entityManager.clear();
+
+        FoodNutrition foundNutrition = foodNutritionRepository.findById(savedFood.getId()).orElseThrow();
+
+        assertEquals(MissingStatus.NONE, foundNutrition.getMissingStatus());
+        assertEquals(NormalizationStatus.AVAILABLE, foundNutrition.getNormalizationStatus());
+        assertEquals("g", foundNutrition.getBasisUnit());
+        assertEquals(Unit.g, foundNutrition.getNormalizedBasisUnit());
+    }
+
+    @Test
+    void preservesOriginalUnitWhenNormalizationDataIsUnavailable() {
+        Food savedFood = foodRepository.saveAndFlush(
+                Food.createLocal("환산 불가 테스트 식품", "테스트 제조사", "가공식품")
+        );
+        FoodNutrition nutrition = createNutrition(
+                savedFood, "개", new BigDecimal("30.000"), null, null
+        );
+
+        foodNutritionRepository.saveAndFlush(nutrition);
+        entityManager.clear();
+
+        FoodNutrition foundNutrition = foodNutritionRepository.findById(savedFood.getId()).orElseThrow();
+
+        assertEquals("개", foundNutrition.getBasisUnit());
+        assertEquals(NormalizationStatus.UNAVAILABLE, foundNutrition.getNormalizationStatus());
+    }
+
+    @Test
+    void allowsNormalizedDataWhenOriginalUnitDiffersFromNormalizedUnit() {
+        Food savedFood = foodRepository.saveAndFlush(
+                Food.createLocal("단위 환산 테스트 식품", "테스트 제조사", "가공식품")
+        );
+        FoodNutrition nutrition = createNutrition(
+                savedFood, "개", new BigDecimal("30.000"), new BigDecimal("100.000"), Unit.g
+        );
+
+        foodNutritionRepository.saveAndFlush(nutrition);
+        entityManager.clear();
+
+        FoodNutrition foundNutrition = foodNutritionRepository.findById(savedFood.getId()).orElseThrow();
+
+        assertEquals("개", foundNutrition.getBasisUnit());
+        assertEquals(Unit.g, foundNutrition.getNormalizedBasisUnit());
+        assertEquals(NormalizationStatus.AVAILABLE, foundNutrition.getNormalizationStatus());
+    }
+
+    @Test
+    void marksGramToMilliliterNormalizationUnavailableWhenDensityIsMissing() {
+        assertMassVolumeNormalizationUnavailable("g", Unit.mL);
+    }
+
+    @Test
+    void marksMilliliterToGramNormalizationUnavailableWhenDensityIsMissing() {
+        assertMassVolumeNormalizationUnavailable("mL", Unit.g);
+    }
+
+    private void assertMassVolumeNormalizationUnavailable(String originalUnit, Unit normalizedUnit) {
+        Food savedFood = foodRepository.saveAndFlush(
+                Food.createLocal("밀도 정보 없는 테스트 식품", "테스트 제조사", "가공식품")
+        );
+        FoodNutrition nutrition = createNutrition(
+                savedFood, originalUnit, new BigDecimal("30.000"), new BigDecimal("100.000"), normalizedUnit
+        );
+
+        foodNutritionRepository.saveAndFlush(nutrition);
+        entityManager.clear();
+
+        FoodNutrition foundNutrition = foodNutritionRepository.findById(savedFood.getId()).orElseThrow();
+
+        assertEquals(originalUnit, foundNutrition.getBasisUnit());
+        assertEquals(NormalizationStatus.UNAVAILABLE, foundNutrition.getNormalizationStatus());
+        assertNull(foundNutrition.getNormalizedBasisValue());
+        assertNull(foundNutrition.getNormalizedBasisUnit());
+    }
+
+    private FoodNutrition createNutrition(
+            Food food, String basisUnit, BigDecimal carbohydrate, BigDecimal normalizedBasisValue, Unit normalizedBasisUnit
+    ) {
+        return FoodNutrition.createLocal(
+                food,
+                new BigDecimal("100.000"),
+                basisUnit,
+                "100" + basisUnit + "당",
+                new BigDecimal("250.000"),
+                carbohydrate,
+                new BigDecimal("12.500"),
+                new BigDecimal("8.000"),
+                new BigDecimal("4.000"),
+                new BigDecimal("500.000"),
+                new BigDecimal("2.000"),
+                new BigDecimal("0.000"),
+                new BigDecimal("10.000"),
+                new BigDecimal("100.000"),
+                new BigDecimal("3.000"),
+                normalizedBasisValue,
+                normalizedBasisUnit
+        );
     }
 }
