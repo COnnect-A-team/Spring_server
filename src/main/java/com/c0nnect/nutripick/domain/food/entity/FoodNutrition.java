@@ -194,7 +194,7 @@ public class FoodNutrition {
         if(basisUnit == null){
             return NormalizationStatus.UNAVAILABLE;
         }
-        if(normalizedBasisValue == null || normalizedBasisValue.compareTo(BigDecimal.ZERO) != 1){
+        if(normalizedBasisValue == null || normalizedBasisValue.signum() <= 0){
             return NormalizationStatus.UNAVAILABLE;
         }
         if(normalizedBasisUnit == null){
