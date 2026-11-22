@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Locale;
 
 @Entity
 @Getter
@@ -124,8 +125,14 @@ public class FoodNutrition {
             BigDecimal normalizedBasisValue,
             Unit normalizedBasisUnit
     ){
-        if (("g".equals(basisUnit) && normalizedBasisUnit == Unit.mL)
-                || (("ml".equals(basisUnit) || "mL".equals(basisUnit)) && normalizedBasisUnit == Unit.g)) {
+        String unitForCheck = basisUnit == null ? "" : basisUnit.strip().toLowerCase(Locale.ROOT); //항상 일관된(언어에 상관 없이) 기준으로 소문자 변환
+
+        boolean mismatch =
+                ("g".equals(unitForCheck) && normalizedBasisUnit == Unit.mL)
+                ||
+                ("ml".equals(unitForCheck) && normalizedBasisUnit == Unit.g);
+
+        if (unitForCheck.isEmpty() || mismatch) {
             normalizedBasisValue = null;
             normalizedBasisUnit = null;
         }
@@ -199,7 +206,7 @@ public class FoodNutrition {
         if (basisValue == null || basisValue.signum() <= 0) {
             return NormalizationStatus.UNAVAILABLE;
         }
-        if(basisUnit == null){
+        if(basisUnit == null || basisUnit.isBlank()){
             return NormalizationStatus.UNAVAILABLE;
         }
         if(normalizedBasisValue == null || normalizedBasisValue.signum() <= 0){

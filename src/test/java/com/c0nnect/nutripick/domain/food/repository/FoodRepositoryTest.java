@@ -175,6 +175,39 @@ class FoodRepositoryTest {
         assertMassVolumeNormalizationUnavailable("mL", Unit.g);
     }
 
+    @Test
+    void marksWhitespacePaddedGramToMilliliterNormalizationUnavailable() {
+        assertMassVolumeNormalizationUnavailable(" g ", Unit.mL);
+    }
+
+    @Test
+    void marksUppercaseMilliliterToGramNormalizationUnavailable() {
+        assertMassVolumeNormalizationUnavailable("ML", Unit.g);
+    }
+
+    @Test
+    void marksNormalizationUnavailableWhenOriginalUnitContainsOnlyWhitespace() {
+        assertMassVolumeNormalizationUnavailable("   ", Unit.g);
+    }
+
+    @Test
+    void marksNormalizationUnavailableWhenOriginalUnitIsNull() {
+        assertMassVolumeNormalizationUnavailable(null, Unit.g);
+    }
+
+    @Test
+    void keepsOriginalUnitUnchangedWhenCaseAndWhitespaceDoNotChangeUnitType() {
+        Food food = Food.createLocal("공백 단위 테스트 식품", "테스트 제조사", "가공식품");
+        FoodNutrition nutrition = createNutrition(
+                food, " G ", new BigDecimal("30.000"), new BigDecimal("100.000"), Unit.g
+        );
+
+        assertEquals(" G ", nutrition.getBasisUnit());
+        assertEquals(NormalizationStatus.AVAILABLE, nutrition.getNormalizationStatus());
+        assertEquals(new BigDecimal("100.000"), nutrition.getNormalizedBasisValue());
+        assertEquals(Unit.g, nutrition.getNormalizedBasisUnit());
+    }
+
     private void assertMassVolumeNormalizationUnavailable(String originalUnit, Unit normalizedUnit) {
         Food savedFood = foodRepository.saveAndFlush(
                 Food.createLocal("밀도 정보 없는 테스트 식품", "테스트 제조사", "가공식품")
