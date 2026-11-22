@@ -1,3 +1,12 @@
 spring:
   application:
     name: nutripick
+  mail:
+    properties:
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
+
+nutripick:
+  jwt:
+    secret: ${NUTRIPICK_JWT_SECRET}

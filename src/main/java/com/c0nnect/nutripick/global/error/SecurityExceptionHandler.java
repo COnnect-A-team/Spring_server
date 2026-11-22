@@ -2,6 +2,7 @@ package com.c0nnect.nutripick.global.error;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -26,6 +27,7 @@ public class SecurityExceptionHandler implements AuthenticationEntryPoint, Acces
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException exception) throws IOException {
+        response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer");
         writeErrorResponse(response, ErrorCode.UNAUTHORIZED);
     }
 
