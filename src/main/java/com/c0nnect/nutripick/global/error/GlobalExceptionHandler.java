@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,6 +46,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ErrorCode.INVALID_REQUEST,
                 Map.of("violations", violations)
         );
+    }
+
+    // 인증 상태에 맞는 401 또는 403 응답을 작성하도록 보안 필터에 처리를 위임합니다.
+    @ExceptionHandler(AccessDeniedException.class)
+    public void propagateAccessDenied(AccessDeniedException exception) {
+        throw exception;
     }
 
     // 예상하지 못한 예외만 기록하고 일반 서버 오류 응답으로 변환

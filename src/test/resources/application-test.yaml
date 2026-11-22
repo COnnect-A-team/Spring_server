@@ -8,3 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+nutripick:
+  jwt:
+    secret: dGVzdC1vbmx5LXNpZ25pbmcta2V5LWZvci1udXRyaXBpY2s=
