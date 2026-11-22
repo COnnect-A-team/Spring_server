@@ -4,12 +4,19 @@ import com.c0nnect.nutripick.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    @EntityGraph(attributePaths = "nutrientPreferences")
+    Optional<User> findWithPreferencesById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<User> findForUpdateById(Long id);
+
     default Optional<User> findByEmail(String email) {
         return uniqueAccount(findTop2ByEmailStartingWithAndEmailIgnoreCase(localPrefix(email), email));
     }
