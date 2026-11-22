@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 @Getter
 @Table(name = "comparison_lists")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class comparison_list {
+public class Comparison_list {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,7 +42,7 @@ public class comparison_list {
     private String basisUnit;
 
     @CreationTimestamp
-    @Column(name = "created_ at", nullable = false)
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
