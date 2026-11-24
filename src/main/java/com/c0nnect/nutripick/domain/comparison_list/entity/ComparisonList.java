@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 @Getter
 @Table(name = "comparison_lists")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Comparison_list {
+public class ComparisonList {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
