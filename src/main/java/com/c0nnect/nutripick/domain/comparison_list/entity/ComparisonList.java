@@ -3,6 +3,7 @@ package com.c0nnect.nutripick.domain.comparison_list.entity;
 import com.c0nnect.nutripick.domain.food.model.Unit;
 import com.c0nnect.nutripick.domain.user.entity.User;
 import com.c0nnect.nutripick.global.error.CustomException;
+import com.c0nnect.nutripick.global.error.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -62,12 +63,12 @@ public class ComparisonList {
             BigDecimal basisValue, Unit basisUnit
     ){
       this.user = user;
-      if(listName == null || listName.isBlank()){throw new IllegalArgumentException("비교 목록 이름은 비어 있을 수 없습니다.");}
+      if(listName == null || listName.isBlank()){throw new CustomException(ErrorCode.INVALID_REQUEST);}
       this.listName = listName;
       this.sortNutrient = sortNutrient;
       this.sortDirection = (sortDirection == null) ? SortDirection.ASC : sortDirection;
       this.basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
-      if(basisUnit == null){throw new IllegalArgumentException("비교 기준량 단위는 비어 있을 수 없습니다.");}
+      if(basisUnit == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
       this.basisUnit = basisUnit;
     }
 
