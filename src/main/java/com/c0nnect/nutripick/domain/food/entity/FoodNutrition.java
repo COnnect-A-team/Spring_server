@@ -1,5 +1,6 @@
 package com.c0nnect.nutripick.domain.food.entity;
 
+import com.c0nnect.nutripick.domain.food.model.Unit;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

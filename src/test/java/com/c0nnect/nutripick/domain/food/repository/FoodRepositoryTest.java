@@ -4,7 +4,7 @@ import com.c0nnect.nutripick.domain.food.entity.Food;
 import com.c0nnect.nutripick.domain.food.entity.FoodNutrition;
 import com.c0nnect.nutripick.domain.food.entity.MissingStatus;
 import com.c0nnect.nutripick.domain.food.entity.NormalizationStatus;
-import com.c0nnect.nutripick.domain.food.entity.Unit;
+import com.c0nnect.nutripick.domain.food.model.Unit;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
