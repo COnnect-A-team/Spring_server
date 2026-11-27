@@ -80,6 +80,8 @@ public class ComparisonList {
 
         basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
 
+        if(basisValue.signum() != 1){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+
         if(basisUnit == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
 
         return new ComparisonList(
@@ -93,6 +95,9 @@ public class ComparisonList {
     }
 
     public void setComparisonList(String listName, String sortNutrient, SortDirection direction, BigDecimal basisValue, Unit basisUnit){
+        if (basisValue != null && basisValue.signum() <= 0) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
         if(listName != null && !listName.isBlank()){
             this.listName = listName;
         }
