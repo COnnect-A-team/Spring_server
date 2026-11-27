@@ -50,10 +50,12 @@ public class ComparisonList {
     private Unit basisUnit;
 
     @CreationTimestamp
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
+    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
@@ -62,18 +64,24 @@ public class ComparisonList {
             BigDecimal basisValue, Unit basisUnit
     ){
       this.user = user;
-      if(listName == null || listName.isBlank()){throw new CustomException(ErrorCode.INVALID_REQUEST);}
       this.listName = listName;
       this.sortNutrient = sortNutrient;
-      this.sortDirection = (sortDirection == null) ? SortDirection.ASC : sortDirection;
-      this.basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
-      if(basisUnit == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+      this.sortDirection = sortDirection;
+      this.basisValue = basisValue;
       this.basisUnit = basisUnit;
     }
 
     public static ComparisonList createLocal(
             User user, String listName, String sortNutrient, SortDirection sortDirection, BigDecimal basisValue, Unit basisUnit
     ){
+        if(listName == null || listName.isBlank()){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+
+        sortDirection = (sortDirection == null) ? SortDirection.ASC : sortDirection;
+
+        basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
+
+        if(basisUnit == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+
         return new ComparisonList(
                 user,
                 listName,
