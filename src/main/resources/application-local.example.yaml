@@ -5,14 +5,8 @@ spring:
     password: nutripick-local
 
   jpa:
-    defer-datasource-initialization: true #jpa가 테이블 생성 후 스크립트 실행하도록 설정
     hibernate:
       ddl-auto: update
-
-  sql:
-    init:
-      mode: always #DB의 스크립트를 항상 실행
-      platform: postgresql
 
   data:
     redis:
