@@ -1,4 +1,4 @@
-package com.c0nnect.nutripick.domain.comparison_list.entity;
+package com.c0nnect.nutripick.domain.comparison_list.entity.ListItem;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

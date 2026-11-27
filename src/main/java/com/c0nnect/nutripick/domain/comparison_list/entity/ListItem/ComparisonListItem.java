@@ -1,5 +1,6 @@
-package com.c0nnect.nutripick.domain.comparison_list.entity;
+package com.c0nnect.nutripick.domain.comparison_list.entity.ListItem;
 
+import com.c0nnect.nutripick.domain.comparison_list.entity.ComparisonList;
 import com.c0nnect.nutripick.domain.food.entity.Food;
 import com.c0nnect.nutripick.global.error.CustomException;
 import com.c0nnect.nutripick.global.error.ErrorCode;
@@ -40,13 +41,15 @@ public class ComparisonListItem {
     private OffsetDateTime addedAt;
 
     private ComparisonListItem(ComparisonList list, Food food, short displayOrder){
-        if(list == null || food == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
         this.comparisonList = list;
         this.food = food;
         this.displayOrder = displayOrder;
     }
 
     public static ComparisonListItem createLocal(ComparisonList list, Food food, short displayOrder){
+
+        if(list == null || food == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+
         return new ComparisonListItem(
             list,
             food,
