@@ -90,6 +90,19 @@ class ComparisonListPostgreSqlTest {
     }
 
     @Test
+    void comparisonListTableDoesNotHaveSortColumns() {
+        List<String> sortColumns = jdbcTemplate.queryForList("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'comparison_lists'
+                  AND column_name IN ('sort_nutrient', 'sort_direction')
+                """, String.class);
+
+        assertTrue(sortColumns.isEmpty());
+    }
+
+    @Test
     void databaseRejectsNormalizedDuplicateOnlyForSameUser() {
         User owner = saveUser("owner@example.com");
         User otherUser = saveUser("other@example.com");
@@ -181,6 +194,6 @@ class ComparisonListPostgreSqlTest {
     }
 
     private ComparisonList saveList(User user, String name) {
-        return comparisonLists.saveAndFlush(ComparisonList.createLocal(user, name, null, null, null, Unit.g));
+        return comparisonLists.saveAndFlush(ComparisonList.createLocal(user, name, null, Unit.g));
     }
 }
