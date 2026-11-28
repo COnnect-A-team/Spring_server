@@ -18,8 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
@@ -87,6 +91,49 @@ class ComparisonListPostgreSqlTest {
         assertTrue(comparisonLists.existsByUser_IdAndListName(owner.getId(), "protein\t간식비교"));
         assertFalse(comparisonLists.existsByUser_IdAndListName(otherUser.getId(), "protein\t간식비교"));
         assertFalse(comparisonLists.existsByUser_IdAndListName(owner.getId(), "다른 비교 목록"));
+    }
+
+    @Test
+    void schemaScriptRemovesLegacySortColumnsAndPreservesComparisonListData() {
+        User owner = saveUser("owner@example.com");
+        ComparisonList list = saveList(owner, "기존 비교 목록");
+
+        jdbcTemplate.execute("ALTER TABLE comparison_lists ADD COLUMN sort_nutrient VARCHAR(50)");
+        jdbcTemplate.execute("ALTER TABLE comparison_lists ADD COLUMN sort_direction VARCHAR(10)");
+        jdbcTemplate.update("""
+                UPDATE comparison_lists
+                SET sort_nutrient = ?, sort_direction = ?
+                WHERE id = ?
+                """, "protein", "DESC", list.getId());
+
+        assertEquals("protein", jdbcTemplate.queryForObject(
+                "SELECT sort_nutrient FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+        assertEquals("DESC", jdbcTemplate.queryForObject(
+                "SELECT sort_direction FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+
+        jdbcTemplate.execute((ConnectionCallback<Void>) connection -> {
+            ScriptUtils.executeSqlScript(
+                    connection,
+                    new EncodedResource(new ClassPathResource("schema-postgresql.sql"))
+            );
+            return null;
+        });
+
+        List<String> sortColumns = jdbcTemplate.queryForList("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'comparison_lists'
+                  AND column_name IN ('sort_nutrient', 'sort_direction')
+                """, String.class);
+
+        assertTrue(sortColumns.isEmpty());
+        assertEquals(1L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM comparison_lists WHERE id = ?", Long.class, list.getId()));
+        assertEquals("기존 비교 목록", jdbcTemplate.queryForObject(
+                "SELECT list_name FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+        assertEquals(owner.getId(), jdbcTemplate.queryForObject(
+                "SELECT user_id FROM comparison_lists WHERE id = ?", Long.class, list.getId()));
     }
 
     @Test
@@ -181,6 +228,6 @@ class ComparisonListPostgreSqlTest {
     }
 
     private ComparisonList saveList(User user, String name) {
-        return comparisonLists.saveAndFlush(ComparisonList.createLocal(user, name, null, null, null, Unit.g));
+        return comparisonLists.saveAndFlush(ComparisonList.createLocal(user, name, null, Unit.g));
     }
 }

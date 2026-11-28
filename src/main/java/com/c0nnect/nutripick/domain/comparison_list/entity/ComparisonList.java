@@ -34,14 +34,6 @@ public class ComparisonList {
     @Column(name = "list_name", length = 100, nullable = false)
     private String listName;
 
-    @Column(name = "sort_nutrient", length = 50)
-    private String sortNutrient;
-
-    @Column(name = "sort_direction", length = 10)
-    @Enumerated(EnumType.STRING)
-    @ColumnDefault("'ASC'")
-    private SortDirection sortDirection;
-
     @Column(name = "basis_value", precision = 10, scale = 3, nullable = false)
     @ColumnDefault("100")
     private BigDecimal basisValue = BigDecimal.valueOf(100);
@@ -61,23 +53,18 @@ public class ComparisonList {
     private OffsetDateTime updatedAt;
 
     private ComparisonList(
-            User user , String listName, String sortNutrient, SortDirection sortDirection,
-            BigDecimal basisValue, Unit basisUnit
+            User user , String listName, BigDecimal basisValue, Unit basisUnit
     ){
       this.user = user;
       this.listName = listName;
-      this.sortNutrient = sortNutrient;
-      this.sortDirection = sortDirection;
       this.basisValue = basisValue;
       this.basisUnit = basisUnit;
     }
 
     public static ComparisonList createLocal(
-            User user, String listName, String sortNutrient, SortDirection sortDirection, BigDecimal basisValue, Unit basisUnit
+            User user, String listName, BigDecimal basisValue, Unit basisUnit
     ){
         if(listName == null || listName.isBlank()){throw new CustomException(ErrorCode.INVALID_REQUEST);}
-
-        sortDirection = (sortDirection == null) ? SortDirection.ASC : sortDirection;
 
         basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
 
@@ -88,25 +75,17 @@ public class ComparisonList {
         return new ComparisonList(
                 user,
                 listName,
-                sortNutrient,
-                sortDirection,
                 basisValue,
                 basisUnit
         );
     }
 
-    public void setComparisonList(String listName, String sortNutrient, SortDirection direction, BigDecimal basisValue, Unit basisUnit){
+    public void setComparisonList(String listName, BigDecimal basisValue, Unit basisUnit){
         if (basisValue != null && basisValue.setScale(3, RoundingMode.DOWN).signum() <= 0) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
         if(listName != null && !listName.isBlank()){
             this.listName = listName;
-        }
-        if(sortNutrient != null && !sortNutrient.isBlank()){
-            this.sortNutrient = sortNutrient;
-        }
-        if(direction != null){
-            this.sortDirection = direction;
         }
         if(basisValue != null){
             this.basisValue = basisValue;
