@@ -16,3 +16,17 @@ spring:
 nutripick:
   jwt:
     secret: ${NUTRIPICK_JWT_SECRET}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  jpa:
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      platform: postgresql
