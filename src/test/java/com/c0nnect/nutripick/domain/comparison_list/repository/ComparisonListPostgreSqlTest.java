@@ -18,8 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
@@ -90,7 +94,31 @@ class ComparisonListPostgreSqlTest {
     }
 
     @Test
-    void comparisonListTableDoesNotHaveSortColumns() {
+    void schemaScriptRemovesLegacySortColumnsAndPreservesComparisonListData() {
+        User owner = saveUser("owner@example.com");
+        ComparisonList list = saveList(owner, "기존 비교 목록");
+
+        jdbcTemplate.execute("ALTER TABLE comparison_lists ADD COLUMN sort_nutrient VARCHAR(50)");
+        jdbcTemplate.execute("ALTER TABLE comparison_lists ADD COLUMN sort_direction VARCHAR(10)");
+        jdbcTemplate.update("""
+                UPDATE comparison_lists
+                SET sort_nutrient = ?, sort_direction = ?
+                WHERE id = ?
+                """, "protein", "DESC", list.getId());
+
+        assertEquals("protein", jdbcTemplate.queryForObject(
+                "SELECT sort_nutrient FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+        assertEquals("DESC", jdbcTemplate.queryForObject(
+                "SELECT sort_direction FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+
+        jdbcTemplate.execute((ConnectionCallback<Void>) connection -> {
+            ScriptUtils.executeSqlScript(
+                    connection,
+                    new EncodedResource(new ClassPathResource("schema-postgresql.sql"))
+            );
+            return null;
+        });
+
         List<String> sortColumns = jdbcTemplate.queryForList("""
                 SELECT column_name
                 FROM information_schema.columns
@@ -100,6 +128,12 @@ class ComparisonListPostgreSqlTest {
                 """, String.class);
 
         assertTrue(sortColumns.isEmpty());
+        assertEquals(1L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM comparison_lists WHERE id = ?", Long.class, list.getId()));
+        assertEquals("기존 비교 목록", jdbcTemplate.queryForObject(
+                "SELECT list_name FROM comparison_lists WHERE id = ?", String.class, list.getId()));
+        assertEquals(owner.getId(), jdbcTemplate.queryForObject(
+                "SELECT user_id FROM comparison_lists WHERE id = ?", Long.class, list.getId()));
     }
 
     @Test
