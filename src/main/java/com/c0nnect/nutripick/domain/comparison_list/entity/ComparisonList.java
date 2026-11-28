@@ -13,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -80,7 +81,7 @@ public class ComparisonList {
 
         basisValue = (basisValue == null) ? BigDecimal.valueOf(100) : basisValue;
 
-        if(basisValue.signum() != 1){throw new CustomException(ErrorCode.INVALID_REQUEST);}
+        if(basisValue.setScale(3, RoundingMode.DOWN).signum() != 1 ){throw new CustomException(ErrorCode.INVALID_REQUEST);}
 
         if(basisUnit == null){throw new CustomException(ErrorCode.INVALID_REQUEST);}
 
@@ -95,7 +96,7 @@ public class ComparisonList {
     }
 
     public void setComparisonList(String listName, String sortNutrient, SortDirection direction, BigDecimal basisValue, Unit basisUnit){
-        if (basisValue != null && basisValue.signum() <= 0) {
+        if (basisValue != null && basisValue.setScale(3, RoundingMode.DOWN).signum() <= 0) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
         if(listName != null && !listName.isBlank()){
